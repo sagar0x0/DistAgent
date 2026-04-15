@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: distagent-worker
+  labels:
+    app: agent-worker
+spec:
+  # Agent workers are completely stateless and purely horizontal! Replicate endlessly.
+  replicas: 5
+  selector:
+    matchLabels:
+      app: agent-worker
+  template:
+    metadata:
+      labels:
+        app: agent-worker
+    spec:
+      containers:
+      - name: worker
+        image: distagent-worker:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        # Crucial: Agents use this address to dynamically heartbeat to the Orchestrator cluster!
+        # Handled by pydantic BaseSettings using DISTAGENT_ prefix automatically
+        - name: DISTAGENT_ORCHESTRATOR_ADDRESS
+          value: "orchestrator-svc:8081"
+        - name: DISTAGENT_AGENT_HOST
+          value: "0.0.0.0" # Bind all network interfaces so Orchestrator can reach it via direct Pod IP
+        - name: DISTAGENT_AGENT_PORT
+          value: "50051"
+        - name: DISTAGENT_AGENT_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name # Use Pod name as unique Agent ID on registry
+        
+        ports:
+        - containerPort: 50051
+          name: grpc-task

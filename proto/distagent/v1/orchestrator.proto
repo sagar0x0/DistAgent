@@ -1,0 +1,156 @@
+syntax = "proto3";
+package distagent.v1;
+
+import "distagent/v1/common.proto";
+
+option go_package = "github.com/sagar/distagent/gen/distagent/v1;distagentv1";
+
+// Client-facing orchestrator API.
+// Served via ConnectRPC — supports gRPC, gRPC-Web, and HTTP/JSON simultaneously.
+service OrchestratorService {
+  // Submit a job and receive a stream of events as the DAG executes.
+  rpc SubmitJob(SubmitJobRequest) returns (stream SubmitJobResponse);
+
+  // Query the current status of a running or completed job.
+  rpc GetJobStatus(GetJobStatusRequest) returns (GetJobStatusResponse);
+
+  // Cancel a running job. In-flight tasks are drained gracefully.
+  rpc CancelJob(CancelJobRequest) returns (CancelJobResponse);
+}
+
+// ---- Request/Response Messages ----
+
+// Request to submit a new agent job for execution.
+message SubmitJobRequest {
+  // Session ID for memory continuity across multiple jobs.
+  string session_id = 1;
+  // User identifier for access control and memory scoping.
+  string user_id = 2;
+  // The user's natural language input.
+  string user_prompt = 3;
+  // ID of the DAG workflow to execute (references a registered YAML definition).
+  string workflow_id = 4;
+  // Additional key-value context injected into the task.
+  map<string, string> context = 5;
+}
+
+// Streamed response events from a running job.
+message SubmitJobResponse {
+  // Globally unique job identifier.
+  string job_id = 1;
+  // Which DAG node produced this event.
+  string node_id = 2;
+
+  // Exactly one event type per message.
+  oneof event {
+    ThinkingEvent thinking = 10;
+    ActionEvent action = 11;
+    ObservationEvent observation = 12;
+    TokenEvent token = 13;
+    FinalAnswerEvent final_answer = 14;
+    ErrorEvent error = 15;
+    StatusEvent status = 16;
+  }
+}
+
+// The agent is reasoning about the next step.
+message ThinkingEvent {
+  // The agent's chain-of-thought text.
+  string thought_text = 1;
+  // Current ReAct step number.
+  int32 step_number = 2;
+}
+
+// The agent decided to invoke a tool.
+message ActionEvent {
+  // Name of the tool being invoked.
+  string tool_name = 1;
+  // Unique ID for this specific tool call.
+  string tool_call_id = 2;
+  // JSON-serialized arguments for the tool.
+  string arguments_json = 3;
+  // Current ReAct step number.
+  int32 step_number = 4;
+}
+
+// A tool has returned its result.
+message ObservationEvent {
+  // Correlates to the ActionEvent's tool_call_id.
+  string tool_call_id = 1;
+  // The tool's output as human-readable text.
+  string observation_text = 2;
+  // Current ReAct step number.
+  int32 step_number = 3;
+}
+
+// An incremental token from the LLM's generation.
+message TokenEvent {
+  // The token delta (one or more characters).
+  string delta = 1;
+  // True if this is the last token chunk in the current generation.
+  bool is_final_chunk = 2;
+}
+
+// The agent has produced a final answer.
+message FinalAnswerEvent {
+  // The complete final answer text.
+  string answer_text = 1;
+  // Total number of ReAct steps taken.
+  int32 total_steps = 2;
+  // Total tokens consumed across all inference calls.
+  int64 total_tokens_used = 3;
+}
+
+// An error occurred during execution.
+message ErrorEvent {
+  // Machine-readable error code (e.g., "MAX_STEPS_EXCEEDED", "TOOL_EXEC_FAILED").
+  string error_code = 1;
+  // Human-readable error description.
+  string error_message = 2;
+  // Whether the client should retry the request.
+  bool is_retryable = 3;
+}
+
+// A state transition event for observability.
+message StatusEvent {
+  // The new FSM state.
+  TaskState state = 1;
+  // Optional descriptive message.
+  string message = 2;
+}
+
+// ---- Job Status ----
+
+// Request to get the status of a specific job.
+message GetJobStatusRequest {
+  // The job ID returned from SubmitJob.
+  string job_id = 1;
+}
+
+// Current status of a job.
+message GetJobStatusResponse {
+  // The job ID.
+  string job_id = 1;
+  // Current overall state.
+  TaskState state = 2;
+  // Node IDs that have completed.
+  repeated string completed_nodes = 3;
+  // Node IDs currently executing.
+  repeated string running_nodes = 4;
+  // Node IDs waiting for dependencies.
+  repeated string pending_nodes = 5;
+}
+
+// ---- Cancel ----
+
+// Request to cancel a running job.
+message CancelJobRequest {
+  // The job ID to cancel.
+  string job_id = 1;
+}
+
+// Acknowledgment of a cancellation request.
+message CancelJobResponse {
+  // Whether the cancellation was accepted.
+  bool acknowledged = 1;
+}

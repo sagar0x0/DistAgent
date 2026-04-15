@@ -1,0 +1,192 @@
+syntax = "proto3";
+package distagent.v1;
+
+import "distagent/v1/common.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/sagar/distagent/gen/distagent/v1;distagentv1";
+
+// Internal service implemented by Python agent workers (CPU-only).
+// The Go orchestrator calls this to dispatch tasks.
+// Agent workers run the ReAct loop and call inference backends via OpenAI-compat HTTP.
+service AgentWorkerService {
+  // Execute a task: the agent runs a ReAct loop and streams events back.
+  rpc ExecuteTask(ExecuteTaskRequest) returns (stream ExecuteTaskResponse);
+
+  // Bidirectional heartbeat: agent reports health, orchestrator can push config.
+  rpc Heartbeat(stream HeartbeatRequest) returns (stream HeartbeatResponse);
+
+  // Graceful shutdown: finish in-flight tasks, stop accepting new ones.
+  rpc Drain(DrainRequest) returns (DrainResponse);
+}
+
+// ---- Task Execution ----
+
+// Request sent by the orchestrator to an agent worker.
+message ExecuteTaskRequest {
+  // Globally unique task identifier.
+  string task_id = 1;
+  // Parent job identifier.
+  string job_id = 2;
+  // Agent node context for this task.
+  AgentNode current_node = 3;
+  // System prompt to prepend to the conversation.
+  string system_prompt = 4;
+  // Additional user context (e.g., injected from session memory).
+  string user_context = 5;
+  // Tools the agent is allowed to invoke during this task.
+  repeated ToolDefinition allowed_tools = 6;
+  // Maximum number of ReAct loop iterations (safety bound).
+  int32 max_react_steps = 7;
+  // Conversation history from session memory.
+  repeated ContextMessage history = 8;
+
+  // Inference configuration for the Phase 2 Executor
+  InferenceConfig executor_inference = 10;
+  // Inference configuration for the Phase 1 Planner
+  InferenceConfig planner_inference = 11;
+  // Send the current snapshot of the graph's state to the agent
+  WorkflowState current_state = 12;
+}
+
+// Streamed response from an agent worker during task execution.
+message ExecuteTaskResponse {
+  // Task ID for correlation.
+  string task_id = 1;
+  // Current FSM state.
+  TaskState state = 2;
+
+  // Exactly one payload per message.
+  oneof payload {
+    ThoughtPayload thought = 10;
+    ActionPayload action = 11;
+    ObservationPayload observation = 12;
+    TokenPayload token = 13;
+    FinalPayload final_result = 14;
+    ErrorPayload error = 15;
+    PlanPayload plan = 30;
+    StepPayload step = 31;
+  }
+
+  // Metrics piggy-backed on stream messages.
+  TaskMetrics metrics = 20;
+}
+
+// Agent's chain-of-thought reasoning.
+message ThoughtPayload {
+  // The reasoning text.
+  string text = 1;
+  // Current ReAct step.
+  int32 step = 2;
+}
+
+// Agent decided to invoke a tool.
+message ActionPayload {
+  // Tool name.
+  string tool_name = 1;
+  // Unique call ID for correlation with observation.
+  string tool_call_id = 2;
+  // JSON-serialized arguments.
+  string arguments_json = 3;
+  // Current ReAct step.
+  int32 step = 4;
+}
+
+// Tool execution result.
+message ObservationPayload {
+  // Correlates to ActionPayload.tool_call_id.
+  string tool_call_id = 1;
+  // JSON-serialized result.
+  string result_json = 2;
+  // Whether the tool execution failed.
+  bool is_error = 3;
+  // Current ReAct step.
+  int32 step = 4;
+}
+
+// Incremental token from the LLM.
+message TokenPayload {
+  // Token delta.
+  string delta = 1;
+}
+
+// Agent produced a final answer.
+message FinalPayload {
+  // The complete answer.
+  string answer = 1;
+  // Total ReAct steps taken.
+  int32 total_steps = 2;
+  // Total prompt tokens consumed across all inference calls in this task.
+  int64 prompt_tokens = 3;
+  // Total completion tokens generated.
+  int64 completion_tokens = 4;
+  // Output from the agent that will be merged into the WorkflowState
+  string state_update_json = 5;
+}
+
+// An error occurred during agent execution.
+message ErrorPayload {
+  // Machine-readable error code.
+  string code = 1;
+  // Human-readable description.
+  string message = 2;
+  // Whether this error is retryable.
+  bool retryable = 3;
+}
+
+// Emitted when the Planner generates the roadmap
+message PlanPayload {
+  repeated string steps = 1;
+}
+
+// Emitted as the Executor attacks each step
+message StepPayload {
+  int32 step_index = 1;
+  string step_description = 2;
+  string step_result = 3;
+}
+
+// Usage metrics from the agent.
+message TaskMetrics {
+  // Cumulative prompt tokens so far.
+  int64 prompt_tokens_so_far = 1;
+  // Cumulative completion tokens so far.
+  int64 completion_tokens_so_far = 2;
+  // Wall-clock inference time accumulated.
+  google.protobuf.Duration inference_time = 3;
+  // Current tokens-per-second throughput.
+  float tokens_per_second = 4;
+}
+
+// ---- Agent Heartbeat ----
+
+// Periodic health report from a CPU-only agent worker.
+message HeartbeatRequest {
+  // Unique agent worker identifier.
+  string agent_id = 1;
+  // Address the orchestrator can dial (host:port for gRPC).
+  string agent_address = 2;
+  // Timestamp of this heartbeat.
+  google.protobuf.Timestamp timestamp = 3;
+  // Current agent status.
+  AgentStatus status = 4;
+  // Number of tasks currently executing.
+  int32 active_tasks = 5;
+  // Maximum concurrent tasks this agent supports.
+  int32 max_concurrent_tasks = 6;
+  // CPU utilization percentage (0.0–100.0).
+  float cpu_usage_percent = 7;
+  // Memory utilization percentage (0.0–100.0).
+  float memory_usage_percent = 8;
+}
+
+// Orchestrator's response to an agent heartbeat.
+message HeartbeatResponse {
+  // Whether the heartbeat was accepted.
+  bool accepted = 1;
+  // Optional status message.
+  string message = 2;
+  // Optional configuration updates pushed from the orchestrator.
+  map<string, string> config_updates = 3;
+}

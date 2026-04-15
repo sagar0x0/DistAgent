@@ -1,0 +1,139 @@
+syntax = "proto3";
+package distagent.v1;
+
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/sagar/distagent/gen/distagent/v1;distagentv1";
+
+// ReAct FSM states tracked by the orchestrator.
+enum TaskState {
+  TASK_STATE_UNSPECIFIED = 0;
+  TASK_STATE_PENDING = 1;
+  TASK_STATE_THINKING = 2;
+  TASK_STATE_ACTION_REQUESTED = 3;
+  TASK_STATE_OBSERVATION_PROVIDED = 4;
+  TASK_STATE_FINAL_ANSWER = 5;
+  TASK_STATE_FAILED = 6;
+  TASK_STATE_CANCELLED = 7;
+  TASK_STATE_PLANNING = 10;
+  TASK_STATE_PLAN_GENERATED = 11;
+  TASK_STATE_REPLANNING = 12;
+  TASK_STATE_STEP_EXECUTING = 13;
+  TASK_STATE_STEP_COMPLETED = 14;
+}
+
+// Status of an agent worker (CPU-only process running ReAct loops).
+enum AgentStatus {
+  AGENT_STATUS_UNSPECIFIED = 0;
+  AGENT_STATUS_READY = 1;
+  AGENT_STATUS_BUSY = 2;
+  AGENT_STATUS_DRAINING = 3;
+  AGENT_STATUS_UNHEALTHY = 4;
+}
+
+// Status of an inference backend (GPU pod or API gateway).
+enum InferenceBackendStatus {
+  INFERENCE_BACKEND_STATUS_UNSPECIFIED = 0;
+  INFERENCE_BACKEND_STATUS_READY = 1;
+  INFERENCE_BACKEND_STATUS_BUSY = 2;
+  INFERENCE_BACKEND_STATUS_DRAINING = 3;
+  INFERENCE_BACKEND_STATUS_UNHEALTHY = 4;
+}
+
+// A tool that the agent is allowed to invoke during a ReAct loop.
+message ToolDefinition {
+  // Unique name of the tool (e.g., "get_weather").
+  string name = 1;
+  // Human-readable description for the LLM prompt.
+  string description = 2;
+  // JSON Schema defining the tool's input parameters.
+  string parameters_json_schema = 3;
+}
+
+// Result of a tool invocation.
+message ToolResult {
+  // Name of the tool that was invoked.
+  string tool_name = 1;
+  // Unique ID correlating this result to the tool call request.
+  string tool_call_id = 2;
+  // Serialized JSON result from the tool.
+  string result_json = 3;
+  // Whether the tool execution itself failed.
+  bool is_error = 4;
+  // Human-readable error message if is_error is true.
+  string error_message = 5;
+}
+
+// Snapshot of a GPU inference backend's KV-cache state.
+// Used by the CHWBL router for prefix-affinity routing.
+message CacheState {
+  // SHA-256 hashes of prompt prefixes currently warm in VRAM.
+  repeated string warm_prefix_hashes = 1;
+  // Fraction of total KV-cache capacity currently in use (0.0–1.0).
+  float cache_usage_percent = 2;
+  // Number of tokens currently cached.
+  int64 num_cached_tokens = 3;
+  // Total KV-cache capacity in tokens.
+  int64 total_cache_capacity_tokens = 4;
+}
+
+// Define an Agent Node in the State Graph
+message AgentNode {
+  string node_id = 1;
+  string agent_type = 2; // e.g., "research_agent", "coder_agent", "supervisor"
+  map<string, string> metadata = 3;
+}
+
+// The evolving state of the entire multi-agent workflow
+message WorkflowState {
+  string session_id = 1;
+
+  // A JSON string or map representing the global shared variables.
+  // Agents read from this and write updates to it.
+  string shared_context_json = 2;
+
+  // The history of which nodes have executed so far, for tracking loops.
+  repeated string execution_trail = 3;
+}
+
+// A single message in a conversation history.
+message ContextMessage {
+  // Role: "system", "user", "assistant", or "tool".
+  string role = 1;
+  // Message content.
+  string content = 2;
+  // Tool call ID (only populated when role="tool").
+  string tool_call_id = 3;
+}
+
+// Configuration for the inference backend that the agent should call.
+// Resolved by the Go orchestrator's KV-cache router before dispatch.
+message InferenceConfig {
+  // Base URL of the OpenAI-compatible endpoint.
+  // e.g., "http://sglang-0.sglang:8000/v1" or "http://litellm:4000/v1"
+  string endpoint_url = 1;
+  // Model identifier to pass in the chat completion request.
+  string model_id = 2;
+  // Sampling temperature.
+  float temperature = 3;
+  // Maximum tokens to generate.
+  int32 max_tokens = 4;
+  // API key (injected by orchestrator, never stored in agent config).
+  string api_key = 5;
+  // SHA-256 hash of the static prompt prefix (for observability).
+  string prefix_hash = 6;
+}
+
+// Request to gracefully drain a worker/backend.
+message DrainRequest {
+  // Maximum time to wait for in-flight tasks to complete.
+  google.protobuf.Duration deadline = 1;
+}
+
+// Response to a drain request.
+message DrainResponse {
+  // Whether the drain was acknowledged.
+  bool acknowledged = 1;
+  // Number of tasks still in-flight at acknowledgment time.
+  int32 tasks_remaining = 2;
+}

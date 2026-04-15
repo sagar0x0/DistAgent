@@ -1,0 +1,22 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/sagar/distagent/gen
+plugins:
+  # Go: protobuf messages
+  - remote: buf.build/protocolbuffers/go
+    out: ../go-orchestrator/gen
+    opt: paths=source_relative
+
+  # Go: gRPC service stubs (standard grpc-go for internal services)
+  - remote: buf.build/grpc/go
+    out: ../go-orchestrator/gen
+    opt: paths=source_relative
+
+  # Go: ConnectRPC stubs (for client-facing OrchestratorService)
+  - remote: buf.build/connectrpc/go
+    out: ../go-orchestrator/gen
+    opt: paths=source_relative
+

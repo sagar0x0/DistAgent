@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: distagent-orchestrator
+  labels:
+    app: orchestrator
+spec:
+  replicas: 1 # Typically 1 unless using Redis to share registry states across replicated orchestrators
+  selector:
+    matchLabels:
+      app: orchestrator
+  template:
+    metadata:
+      labels:
+        app: orchestrator
+    spec:
+      containers:
+      - name: orchestrator
+        image: distagent-orchestrator:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: distagent-secrets
+              key: gemini-api-key
+        ports:
+        - containerPort: 8080
+          name: http-connect
+        - containerPort: 8081
+          name: internal-grpc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orchestrator-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: orchestrator
+  ports:
+    - name: http-connect
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+    - name: internal-grpc
+      protocol: TCP
+      port: 8081
+      targetPort: 8081

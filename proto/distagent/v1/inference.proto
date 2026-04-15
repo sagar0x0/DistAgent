@@ -1,0 +1,65 @@
+syntax = "proto3";
+package distagent.v1;
+
+import "distagent/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/sagar/distagent/gen/distagent/v1;distagentv1";
+
+// Service for GPU inference backend registration and health reporting.
+// Implemented by a sidecar running alongside each SGLang/vLLM pod.
+// The Go orchestrator uses this data for KV-cache-aware CHWBL routing.
+// NOTE: External API backends (via LiteLLM) do NOT implement this service;
+// they are configured statically in the orchestrator.
+service InferenceBackendService {
+  // Bidirectional heartbeat: backend reports GPU health + KV-cache state,
+  // orchestrator can push configuration updates.
+  rpc ReportHealth(stream ReportHealthRequest) returns (stream ReportHealthResponse);
+}
+
+// Periodic health and cache state report from a GPU inference backend.
+message ReportHealthRequest {
+  // Unique backend identifier (e.g., "sglang-0", "sglang-1").
+  string backend_id = 1;
+  // Base URL for the OpenAI-compatible inference endpoint.
+  // e.g., "http://sglang-0.sglang.distagent.svc.cluster.local:8000/v1"
+  string endpoint_url = 2;
+  // Timestamp of this heartbeat.
+  google.protobuf.Timestamp timestamp = 3;
+  // Current backend status.
+  InferenceBackendStatus status = 4;
+  // Model currently loaded in this backend.
+  string loaded_model_id = 5;
+  // Number of inference requests currently being processed.
+  int32 active_requests = 6;
+  // Maximum concurrent requests this backend can handle.
+  int32 max_concurrent_requests = 7;
+
+  // ---- GPU Metrics ----
+
+  // GPU compute utilization percentage (0.0–100.0).
+  float gpu_utilization_percent = 8;
+  // GPU memory currently in use (GB).
+  float gpu_memory_used_gb = 9;
+  // Total GPU memory available (GB).
+  float gpu_memory_total_gb = 10;
+
+  // ---- KV-Cache State (Critical for CHWBL routing) ----
+
+  // Snapshot of the inference engine's KV-cache state.
+  // Contains warm prefix hashes, cache utilization, and capacity.
+  CacheState cache_state = 11;
+
+  // Maximum sequence length supported by the loaded model.
+  int32 max_sequence_length = 12;
+}
+
+// Orchestrator's response to an inference backend heartbeat.
+message ReportHealthResponse {
+  // Whether the heartbeat was accepted.
+  bool accepted = 1;
+  // Optional status message.
+  string message = 2;
+  // Optional configuration updates (e.g., "drain", "switch_model").
+  map<string, string> config_updates = 3;
+}
