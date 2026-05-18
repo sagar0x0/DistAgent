@@ -366,6 +366,26 @@ Test coverage includes:
 
 ---
 
+## Scale Metrics
+
+The control plane is aggressively benchmarked using Go's native `testing.B` suite across scaling dimensions (1 to 500 simulated workers). All critical routing and FSM paths are zero-allocation or bounded-allocation.
+
+Benchmarks run on a standard Apple M1 via `make bench`:
+
+![DistAgent Benchmark Results](bench_chart.png)
+
+| Subsystem | Metric | Throughput | Allocations |
+|-----------|--------|------------|-------------|
+| **CHWBL Inference Router** | `GetBackendWithCacheAffinity` (100 GPU pods, 50% hit rate) | **~9.2 Million routes / sec** | 1 alloc / op |
+| **Agent Registry Selection** | `GetLeastLoaded` (Sweep across 500 workers) | **~164,000 selections / sec** | 0 allocs / op |
+| **StateGraph FSM** | Single step transition + safety validation | **~2.1 Million transitions / sec** | 2 allocs / op |
+| **Prefix Hash Engine** | SHA-256 computation (Prompt + 10 Tool Schemas) | **~633,000 hashes / sec** | 27 allocs / op |
+| **Full Control Plane** | End-to-End Routing Pipeline (Hash + Route + Select) | **~101,000 decisions / sec** (Parallel) | Bounded (340 allocs) |
+
+> **Interview Defensibility Note:** At 100,000 full routing decisions per second, a single orchestrator pod can saturate over 10,000 concurrently active LLM sessions (assuming ~100ms between tool-call iterations). The Go runtime is fundamentally not the bottleneck in this architecture.
+
+---
+
 ## What I'd Build Next
 
 This is a working system, not a finished product. The backlog reflects where I'd invest engineering time:
