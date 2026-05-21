@@ -98,6 +98,7 @@ The routing layer is the most novel part of this system. In a Plan-and-Execute a
 
 **The solution**: compute a deterministic SHA-256 hash of `(system_prompt + sorted_tool_schemas)`, then use it as the primary routing key on a Consistent Hash Ring with Bounded Loads:
 
+![Consistent Hashing Diagram](diagram/consistent_hashing.png)
 
 ```mermaid
 flowchart LR

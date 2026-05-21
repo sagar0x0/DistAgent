@@ -100,6 +100,13 @@ async def run_plan_execute_task(
         )
         return
 
+    for i, step_desc in enumerate(steps):
+        yield agent_pb2.ExecuteTaskResponse(
+            task_id=request.task_id,
+            state=common_pb2.TASK_STATE_PLAN_GENERATED,
+            thought=agent_pb2.ThoughtPayload(text=step_desc, step=i+1)
+        )
+
     yield agent_pb2.ExecuteTaskResponse(
         task_id=request.task_id,
         state=common_pb2.TASK_STATE_PLAN_GENERATED,
@@ -203,6 +210,17 @@ async def run_plan_execute_task(
                     tool_args = tc["function"]["arguments"]
                     tool_call_id = tc["id"]
                     
+                    yield agent_pb2.ExecuteTaskResponse(
+                        task_id=request.task_id,
+                        state=common_pb2.TASK_STATE_STEP_EXECUTING,
+                        action=agent_pb2.ActionPayload(
+                            tool_name=tool_name,
+                            tool_call_id=tool_call_id,
+                            arguments_json=tool_args,
+                            step=i+1
+                        )
+                    )
+                    
                     try:
                         args_dict = json.loads(tool_args)
                         obs_res = await default_registry.invoke(tool_name, json.dumps(args_dict))
@@ -213,7 +231,8 @@ async def run_plan_execute_task(
             else:
                 # No tools called. This means the step is complete.
                 executor_messages.append({"role": "assistant", "content": llm_response_content})
-                step_result_text = llm_response_content.strip()
+                # Clean up the FINAL_RESULT wrapper that the LLM tends to add
+                step_result_text = llm_response_content.replace("FINAL_RESULT:", "").replace("FINAL_RESULT", "").strip()
                 step_completed = True
                 break
         
@@ -246,7 +265,9 @@ async def run_plan_execute_task(
     # ---------------------------------------------------------
     # FINAL REDUCTION
     # ---------------------------------------------------------
-    final_answer = "\n".join(step_results)
+    # The final answer is just the output of the very last step, rather than 
+    # a raw dump of every step's internal reasoning.
+    final_answer = step_results[-1].split("completed: ", 1)[-1] if step_results else "No result generated."
     
     # We mutate the global state (in a real system, we might ask the LLM to write a JSON patch)
     old_state = {}

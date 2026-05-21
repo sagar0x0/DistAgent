@@ -1,0 +1,137 @@
+Running performance benchmarks...
+?   	github.com/sagar/distagent/cmd/client_demo	[no test files]
+?   	github.com/sagar/distagent/cmd/e2e	[no test files]
+?   	github.com/sagar/distagent/cmd/orchestrator	[no test files]
+?   	github.com/sagar/distagent/gen/distagent/v1	[no test files]
+?   	github.com/sagar/distagent/gen/distagent/v1/distagentv1connect	[no test files]
+goos: darwin
+goarch: arm64
+pkg: github.com/sagar/distagent/internal/api
+cpu: Apple M1
+BenchmarkControlPlane_FullRoutingDecision-8            	   49788	     21701 ns/op	   13565 B/op	     338 allocs/op
+BenchmarkControlPlane_FullRoutingDecision-8            	   50683	     23648 ns/op	   13565 B/op	     338 allocs/op
+BenchmarkControlPlane_FullRoutingDecision-8            	   48808	     21880 ns/op	   13565 B/op	     338 allocs/op
+BenchmarkControlPlane_FullRoutingDecision_Parallel-8   	  127862	      9994 ns/op	   13594 B/op	     340 allocs/op
+BenchmarkControlPlane_FullRoutingDecision_Parallel-8   	  114463	      9778 ns/op	   13595 B/op	     340 allocs/op
+BenchmarkControlPlane_FullRoutingDecision_Parallel-8   	  126414	     10068 ns/op	   13596 B/op	     340 allocs/op
+PASS
+ok  	github.com/sagar/distagent/internal/api	8.650s
+?   	github.com/sagar/distagent/internal/dispatcher	[no test files]
+goos: darwin
+goarch: arm64
+pkg: github.com/sagar/distagent/internal/fsm
+cpu: Apple M1
+BenchmarkFSM_FullLifecycle-8      	  656548	      1785 ns/op	     808 B/op	      14 allocs/op
+BenchmarkFSM_FullLifecycle-8      	  678716	      1790 ns/op	     808 B/op	      14 allocs/op
+BenchmarkFSM_FullLifecycle-8      	  665311	      1808 ns/op	     808 B/op	      14 allocs/op
+BenchmarkFSM_SingleTransition-8   	 2527461	       486.7 ns/op	     295 B/op	       2 allocs/op
+BenchmarkFSM_SingleTransition-8   	 2253159	       458.2 ns/op	     315 B/op	       2 allocs/op
+BenchmarkFSM_SingleTransition-8   	 2644591	       489.7 ns/op	     287 B/op	       2 allocs/op
+BenchmarkFSM_Parallel-8           	 2238758	       554.8 ns/op	     680 B/op	      12 allocs/op
+BenchmarkFSM_Parallel-8           	 2265014	       629.3 ns/op	     680 B/op	      12 allocs/op
+BenchmarkFSM_Parallel-8           	 1969627	       596.7 ns/op	     680 B/op	      12 allocs/op
+PASS
+ok  	github.com/sagar/distagent/internal/fsm	16.459s
+goos: darwin
+goarch: arm64
+pkg: github.com/sagar/distagent/internal/registry
+cpu: Apple M1
+BenchmarkAgentRegistry_GetLeastLoaded/5_Agents-8     	 9921085	       111.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/5_Agents-8     	 7210293	       162.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/5_Agents-8     	 7781986	       131.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/10_Agents-8    	 6337170	       183.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/10_Agents-8    	 6490774	       183.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/10_Agents-8    	 6476907	       188.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/50_Agents-8    	 2069025	       588.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/50_Agents-8    	 1713447	       593.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/50_Agents-8    	 2079295	       590.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/100_Agents-8   	 1000000	      1189 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/100_Agents-8   	 1000000	      1099 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/100_Agents-8   	 1000000	      1111 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/500_Agents-8   	  204609	      6434 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/500_Agents-8   	  185779	      5803 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded/500_Agents-8   	  204606	      5986 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded_Parallel-8     	 5973022	       260.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded_Parallel-8     	 6101740	       192.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_GetLeastLoaded_Parallel-8     	 8615730	       178.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAgentRegistry_RegisterOrUpdate_Parallel-8   	 5364262	       233.5 ns/op	      32 B/op	       1 allocs/op
+BenchmarkAgentRegistry_RegisterOrUpdate_Parallel-8   	 4642346	       229.1 ns/op	      32 B/op	       1 allocs/op
+BenchmarkAgentRegistry_RegisterOrUpdate_Parallel-8   	 5450764	       219.6 ns/op	      32 B/op	       1 allocs/op
+BenchmarkAgentRegistry_MixedReadWrite_Parallel-8     	 2511558	       488.1 ns/op	       3 B/op	       0 allocs/op
+BenchmarkAgentRegistry_MixedReadWrite_Parallel-8     	 2469250	       485.3 ns/op	       3 B/op	       0 allocs/op
+BenchmarkAgentRegistry_MixedReadWrite_Parallel-8     	 2514022	       484.4 ns/op	       3 B/op	       0 allocs/op
+BenchmarkInferenceRegistry_GetCacheStates/10_Backends-8         	 2256811	       543.8 ns/op	     712 B/op	       5 allocs/op
+BenchmarkInferenceRegistry_GetCacheStates/10_Backends-8         	 2272885	       529.9 ns/op	     712 B/op	       5 allocs/op
+BenchmarkInferenceRegistry_GetCacheStates/10_Backends-8         	 2252200	       540.5 ns/op	     712 B/op	       5 allocs/op
+BenchmarkInferenceRegistry_GetCacheStates/50_Backends-8         	  489898	      2513 ns/op	    3464 B/op	       9 allocs/op
+BenchmarkInferenceRegistry_GetCacheStates/50_Backends-8         	  483284	      2644 ns/op	    3464 B/op	       9 allocs/op
+BenchmarkInferenceRegistry_GetCacheStates/50_Backends-8         	  484176	      2502 ns/op	    3464 B/op	       9 allocs/op
+BenchmarkInferenceRegistry_GetCacheStates/100_Backends-8        	  229242	      4948 ns/op	    6952 B/op	      11 allocs/op
+BenchmarkInferenceRegistry_GetCacheStates/100_Backends-8        	  248994	      5287 ns/op	    6952 B/op	      11 allocs/op
+BenchmarkInferenceRegistry_GetCacheStates/100_Backends-8        	  248425	      4787 ns/op	    6952 B/op	      11 allocs/op
+PASS
+ok  	github.com/sagar/distagent/internal/registry	48.954s
+goos: darwin
+goarch: arm64
+pkg: github.com/sagar/distagent/internal/router
+cpu: Apple M1
+BenchmarkHashRing_GetBackend/3_Backends-8         	16967420	        70.57 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/3_Backends-8         	17000487	        71.34 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/3_Backends-8         	16332436	        72.95 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/10_Backends-8        	15860550	        74.25 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/10_Backends-8        	16960800	        71.39 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/10_Backends-8        	16890504	        71.69 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/50_Backends-8        	16404058	        73.09 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/50_Backends-8        	16084021	        73.11 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/50_Backends-8        	16378898	        73.13 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/100_Backends-8       	15636978	        77.48 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/100_Backends-8       	15663980	        76.51 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/100_Backends-8       	15688366	        76.44 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/500_Backends-8       	15458355	        78.04 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/500_Backends-8       	15432453	        77.66 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackend/500_Backends-8       	15451489	        77.75 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackendWithCacheAffinity/3_Backends-8         	 9464701	       126.2 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackendWithCacheAffinity/3_Backends-8         	 9276586	       127.1 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackendWithCacheAffinity/3_Backends-8         	 9499855	       126.2 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackendWithCacheAffinity/10_Backends-8        	 6233397	       198.5 ns/op	      64 B/op	       2 allocs/op
+BenchmarkHashRing_GetBackendWithCacheAffinity/10_Backends-8        	 6252758	       196.7 ns/op	      64 B/op	       2 allocs/op
+BenchmarkHashRing_GetBackendWithCacheAffinity/10_Backends-8        	 6278782	       191.0 ns/op	      64 B/op	       2 allocs/op
+BenchmarkHashRing_GetBackendWithCacheAffinity/50_Backends-8        	11902356	       102.1 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackendWithCacheAffinity/50_Backends-8        	11487361	       110.0 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackendWithCacheAffinity/50_Backends-8        	11864320	       101.6 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackendWithCacheAffinity/100_Backends-8       	11317249	       109.7 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackendWithCacheAffinity/100_Backends-8       	11438056	       109.5 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_GetBackendWithCacheAffinity/100_Backends-8       	11437962	       107.9 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_CacheHitVsMiss/CacheHit-8                        	14150427	        90.74 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_CacheHitVsMiss/CacheHit-8                        	14119348	        85.64 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_CacheHitVsMiss/CacheHit-8                        	13876729	        84.88 ns/op	      32 B/op	       1 allocs/op
+BenchmarkHashRing_CacheHitVsMiss/CacheMiss-8                       	 7522459	       159.5 ns/op	      64 B/op	       2 allocs/op
+BenchmarkHashRing_CacheHitVsMiss/CacheMiss-8                       	 7605691	       158.1 ns/op	      64 B/op	       2 allocs/op
+BenchmarkHashRing_CacheHitVsMiss/CacheMiss-8                       	 7556845	       157.9 ns/op	      64 B/op	       2 allocs/op
+BenchmarkHashRing_AddBackend/10_Backends-8                         	   61426	     19543 ns/op	   11324 B/op	     320 allocs/op
+BenchmarkHashRing_AddBackend/10_Backends-8                         	   61696	     19776 ns/op	   11324 B/op	     320 allocs/op
+BenchmarkHashRing_AddBackend/10_Backends-8                         	   61609	     20324 ns/op	   11324 B/op	     320 allocs/op
+BenchmarkHashRing_AddBackend/100_Backends-8                        	    5184	    227573 ns/op	  143489 B/op	    3035 allocs/op
+BenchmarkHashRing_AddBackend/100_Backends-8                        	    5269	    227858 ns/op	  143490 B/op	    3035 allocs/op
+BenchmarkHashRing_AddBackend/100_Backends-8                        	    5433	    228293 ns/op	  143490 B/op	    3035 allocs/op
+BenchmarkHashRing_AddBackend/500_Backends-8                        	     931	   1299504 ns/op	  679996 B/op	   15065 allocs/op
+BenchmarkHashRing_AddBackend/500_Backends-8                        	     936	   1279275 ns/op	  679996 B/op	   15065 allocs/op
+BenchmarkHashRing_AddBackend/500_Backends-8                        	     937	   1375869 ns/op	  680004 B/op	   15065 allocs/op
+BenchmarkComputePrefixHash/0_Tools-8                               	 7772672	       148.5 ns/op	     240 B/op	       4 allocs/op
+BenchmarkComputePrefixHash/0_Tools-8                               	 7675243	       165.7 ns/op	     240 B/op	       4 allocs/op
+BenchmarkComputePrefixHash/0_Tools-8                               	 8125947	       147.6 ns/op	     240 B/op	       4 allocs/op
+BenchmarkComputePrefixHash/2_Tools-8                               	 2551724	       467.5 ns/op	     632 B/op	      11 allocs/op
+BenchmarkComputePrefixHash/2_Tools-8                               	 2571250	       467.1 ns/op	     632 B/op	      11 allocs/op
+BenchmarkComputePrefixHash/2_Tools-8                               	 2573878	       467.0 ns/op	     632 B/op	      11 allocs/op
+BenchmarkComputePrefixHash/10_Tools-8                              	  801690	      1595 ns/op	    1976 B/op	      27 allocs/op
+BenchmarkComputePrefixHash/10_Tools-8                              	  773788	      1547 ns/op	    1976 B/op	      27 allocs/op
+BenchmarkComputePrefixHash/10_Tools-8                              	  776713	      1595 ns/op	    1976 B/op	      27 allocs/op
+BenchmarkComputePrefixHash/50_Tools-8                              	  135000	      8798 ns/op	    8712 B/op	     107 allocs/op
+BenchmarkComputePrefixHash/50_Tools-8                              	  138606	      8887 ns/op	    8712 B/op	     107 allocs/op
+BenchmarkComputePrefixHash/50_Tools-8                              	  138814	      8653 ns/op	    8712 B/op	     107 allocs/op
+BenchmarkComputePrefixHash_LargePrompt-8                           	  173167	      6929 ns/op	   14184 B/op	      27 allocs/op
+BenchmarkComputePrefixHash_LargePrompt-8                           	  173940	      7006 ns/op	   14184 B/op	      27 allocs/op
+BenchmarkComputePrefixHash_LargePrompt-8                           	  171928	      7098 ns/op	   14184 B/op	      27 allocs/op
+PASS
+ok  	github.com/sagar/distagent/internal/router	78.766s
+?   	github.com/sagar/distagent/internal/stategraph	[no test files]

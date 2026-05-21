@@ -27,3 +27,15 @@ init:
 clean:
 	@rm -rf go-orchestrator/gen
 	@rm -rf agent-worker/gen
+
+bench:
+	@echo "Running performance benchmarks..."
+	@cd go-orchestrator && go test -bench=. -benchmem -count=3 -timeout=300s ./...
+
+bench-json:
+	@echo "Running performance benchmarks with JSON output..."
+	@cd go-orchestrator && go test -bench=. -benchmem -count=3 -timeout=300s -json ./... > bench_results.json
+
+bench-profile:
+	@echo "Running control plane profile..."
+	@cd go-orchestrator && go test -bench=BenchmarkControlPlane -benchmem -cpuprofile=cpu.prof -memprofile=mem.prof ./internal/api/
